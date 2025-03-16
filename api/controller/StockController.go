@@ -103,7 +103,7 @@ func (c *StockController) CreateStock(ctx *gin.Context) {
 
 // CreateStocks handles multiple stocks creation request
 func (c *StockController) CreateStocks(ctx *gin.Context) {
-	var rawStocks []map[string]interface{}
+	var rawStocks []map[string]any
 
 	if err := ctx.ShouldBindJSON(&rawStocks); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
