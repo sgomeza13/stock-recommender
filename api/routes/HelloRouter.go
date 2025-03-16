@@ -7,6 +7,7 @@ import (
 
 func RegisterRoutes(router *gin.Engine) {
 	helloRoutes(router)
+	RegisterStockRoutes(router)
 }
 
 func helloRoutes(router *gin.Engine) {

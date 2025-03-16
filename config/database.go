@@ -37,6 +37,14 @@ func ConnectDB() {
 	log.Println("Successfully connected to the database!")
 }
 
+// GetDB returns the database connection
+func GetDB() *pgx.Conn {
+	if DB == nil {
+		log.Fatal("Database connection is not initialized. Call ConnectDB() first.")
+	}
+	return DB
+}
+
 // CloseDB closes the database connection
 func CloseDB() {
 	if DB != nil {
