@@ -19,10 +19,40 @@ func (s *StockService) GetAllStocks() ([]models.Stock, error) {
 	return s.Repository.GetAllStocks()
 }
 
-func (s *StockService) GetStocksPaginated(limit, offset int) ([]models.Stock, error) {
-	return s.Repository.GetStocksPaginated(limit, offset)
+// Define a pagination response struct at the service level
+type PaginatedStocksResponse struct {
+	Stocks     []models.Stock `json:"stocks"`
+	TotalCount int            `json:"totalCount"`
+	Page       int            `json:"page"`
+	PageSize   int            `json:"pageSize"`
+	TotalPages int            `json:"totalPages"`
 }
 
+// Updated service method with page-based pagination
+func (s *StockService) GetStocksPaginated(page, pageSize int) (PaginatedStocksResponse, error) {
+	// Validate pagination parameters
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 10 // Default page size
+	}
+
+	// Call the repository with the updated pagination method
+	paginatedStocks, err := s.Repository.GetStocksPaginated(page, pageSize)
+	if err != nil {
+		return PaginatedStocksResponse{}, err
+	}
+
+	// Map repository response to service response
+	return PaginatedStocksResponse{
+		Stocks:     paginatedStocks.Stocks,
+		TotalCount: paginatedStocks.TotalCount,
+		Page:       paginatedStocks.Page,
+		PageSize:   paginatedStocks.PageSize,
+		TotalPages: paginatedStocks.TotalPages,
+	}, nil
+}
 func (s *StockService) GetStockByID(id int) (*models.Stock, error) {
 	return s.Repository.GetStockByID(id)
 }

@@ -46,17 +46,35 @@ func (r *StockRepository) GetAllStocks() ([]models.Stock, error) {
 	return stocks, nil
 }
 
-// ✅ Get paginated stocks
-func (r *StockRepository) GetStocksPaginated(limit, offset int) ([]models.Stock, error) {
-	query := `SELECT id, ticker, target_from, target_to, company, action, brokerage, 
-                     rating_from, rating_to, time 
-              FROM stock 
-              ORDER BY id 
-              LIMIT $1 OFFSET $2`
+type PaginatedStocks struct {
+	Stocks     []models.Stock
+	TotalCount int
+	Page       int
+	PageSize   int
+	TotalPages int
+}
 
-	rows, err := r.DB.Query(context.Background(), query, limit, offset)
+func (r *StockRepository) GetStocksPaginated(page, pageSize int) (PaginatedStocks, error) {
+	// Calculate offset from page number
+	offset := (page - 1) * pageSize
+
+	// First get total count
+	var totalCount int
+	countQuery := `SELECT COUNT(*) FROM stock`
+	err := r.DB.QueryRow(context.Background(), countQuery).Scan(&totalCount)
 	if err != nil {
-		return nil, err
+		return PaginatedStocks{}, err
+	}
+
+	// Then get paginated data
+	query := `SELECT id, ticker, target_from, target_to, company, action, brokerage,
+              rating_from, rating_to, time
+              FROM stock
+              ORDER BY id
+              LIMIT $1 OFFSET $2`
+	rows, err := r.DB.Query(context.Background(), query, pageSize, offset)
+	if err != nil {
+		return PaginatedStocks{}, err
 	}
 	defer rows.Close()
 
@@ -67,12 +85,24 @@ func (r *StockRepository) GetStocksPaginated(limit, offset int) ([]models.Stock,
 			&stock.Company, &stock.Action, &stock.Brokerage, &stock.RatingFrom,
 			&stock.RatingTo, &stock.Time)
 		if err != nil {
-			return nil, err
+			return PaginatedStocks{}, err
 		}
 		stocks = append(stocks, stock)
 	}
 
-	return stocks, nil
+	// Calculate total pages
+	totalPages := totalCount / pageSize
+	if totalCount%pageSize > 0 {
+		totalPages++
+	}
+
+	return PaginatedStocks{
+		Stocks:     stocks,
+		TotalCount: totalCount,
+		Page:       page,
+		PageSize:   pageSize,
+		TotalPages: totalPages,
+	}, nil
 }
 
 // GetStockByID retrieves a stock by its ID

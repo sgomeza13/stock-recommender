@@ -33,28 +33,28 @@ func (sc *StockController) GetAllStocks(c *gin.Context) {
 
 // ✅ Handle paginated stock request
 func (sc *StockController) GetStocksPaginated(c *gin.Context) {
-	// Get query params
-	limit, err := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	if err != nil || limit <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit"})
+	// Get query params (now using page and pageSize)
+	page, err := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if err != nil || page <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page number"})
 		return
 	}
 
-	offset, err := strconv.Atoi(c.DefaultQuery("offset", "0"))
-	if err != nil || offset < 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid offset"})
+	pageSize, err := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+	if err != nil || pageSize <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page size"})
 		return
 	}
-
-	// Call service
-	stocks, err := sc.StockService.GetStocksPaginated(limit, offset)
+	fmt.Printf("Controller received: page=%d, pageSize=%d\n", page, pageSize)
+	// Call service with updated parameters
+	paginatedResponse, err := sc.StockService.GetStocksPaginated(page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Return JSON response
-	c.JSON(http.StatusOK, stocks)
+	// Return JSON response (now includes pagination metadata)
+	c.JSON(http.StatusOK, paginatedResponse)
 }
 
 func (sc *StockController) GetStockByID(c *gin.Context) {
